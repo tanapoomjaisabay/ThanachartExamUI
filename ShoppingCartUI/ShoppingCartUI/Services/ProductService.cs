@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using ShoppingCartUI.Models;
 using ShoppingCartUI.Services.Interfaces;
 
@@ -56,6 +57,25 @@ namespace ShoppingCartUI.Services
             if (response == null)
             {
                 return new ResponseGetListProductModel
+                {
+                    message = "Failed to connect internal service."
+                };
+            }
+
+            return response;
+        }
+
+        public ResponseTransactionModel CreateTransaction(RequestTransactionModel model)
+        {
+            string host = _configuration["DemoAPI:URL"];
+            string controller = "Transaction/CreateTransaction";
+            string data = JsonConvert.SerializeObject(model);
+
+            var content = _connectService.PostAPI(host, controller, data);
+            var response = JsonConvert.DeserializeObject<ResponseTransactionModel>(content);
+            if (response == null)
+            {
+                return new ResponseTransactionModel
                 {
                     message = "Failed to connect internal service."
                 };

@@ -16,19 +16,12 @@
             <label for="transactionDate" class="form-label">Transaction Date:</label>
             <input type="date" class="form-control" id="transactionDate" placeholder="Enter Transaction Date" name="transactionDate" readonly>
         </div>
-        <div class="col-md-6">
-            <label for="amount" class="form-label">Total Amount:</label>
-            <input type="number" class="form-control" id="amount" placeholder="Enter Amount" name="amount" maxlength="10" readonly>
-        </div>
         <div class="col-12">
             <button id="btnProduct" type="button" class="btn btn-success">Product</button>
-            <button id="btnCheckout" type="button" class="btn btn-primary">Checkout</button>
         </div>
-        <hr>
-        <h2>Product Details</h2>
-        <div class="cart">
+        @*<div class="cart">
             <!-- Cart items will be dynamically added here -->
-        </div>
+        </div>*@
         <hr>
         <div>
             <table id="myTable" class="display">
@@ -47,6 +40,33 @@
                 </tbody>
             </table>
         </div>
+        <hr>
+        <h2>Cart Details</h2>
+        <div class="col-md-6">
+            <label for="amount" class="form-label">Total Amount:</label>
+            <input type="number" class="form-control" id="amount" placeholder="Enter Amount" name="amount" maxlength="10" readonly>
+        </div>
+        <div class="col-12">
+            <button id="btnCheckout" type="button" class="btn btn-primary">Checkout</button>
+        </div>
+        <hr>
+        <div>
+            <table id="myCart" class="display">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>ProductCode</th>
+                        <th>ProductDesc</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Remove</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
     </form>
         <hr>
         <hr>
@@ -57,7 +77,11 @@
 </div>
 
 <script>
+    var cart = [];
+    var listCart = [];
+    var total = 0;
     var myTable;
+    var myCart;
     $(document).ready(function () {
         setEventjQuery();
     });
@@ -69,31 +93,68 @@
         var month = ("0" + (now.getMonth() + 1)).slice(-2);
 
         var today = now.getFullYear() + "-" + (month) + "-" + (day);
+        let randomNum = Math.floor(Math.random() * 9000000000) + 1000000000;
 
+        $('#amount').val('0');
+        $('#transactionNumber').val(randomNum);
         $('#transactionDate').val(today);
 
         $("#btnProduct").on("click", function () {
             SearchData();
         });
+        $("#btnCheckout").on("click", function () {
+            Createtransaction();
+        });
 
         setDataTable();
+        setDataTableChart();
     }
 
     function setDataTable() {
         myTable = $('#myTable').DataTable({
             searching: false,
-            //"columnDefs": [
-            //    {
-            //        targets: 6,
-            //        render: function (data, type, row, meta) {
-            //            //var idCard = "'" + row[1] + "'";
-            //            return '<center><a href="#" style="cursor:pointer" onclick="addToCart("AAA", "10")">' + 'Select' + '</a></center>';
-            //            //return '<center><a href="#" style="cursor:pointer" onclick="addToCart(' + idCard + ', ' + asas2 + ')">' + 'Select' + '</a></center>';
-            //        }
-            //    }
-            //]
+            "columnDefs": [
+                {
+                    targets: 6,
+                    render: function (data, type, row, meta) {
+                        //var idCard = "'" + row[1] + "'";
+                        var param1 = "'" + row[1] + "'";
+                        var param2 = "'" + row[3] + "'";
+                        var param3 = "'" + row[4] + "'";
+                        var param4 = "'" + row[2] + "'";
+                        return '<center><a class="datalink" style="cursor:pointer" onclick="addToCart(' + param1 + ',' + param2 + ',' + param3 + ',' + param4 + ')">' + 'Select' + '</a></center>';
+                        //return '<center><a href="#" style="cursor:pointer" onclick="addToCart(' + idCard + ', ' + asas2 + ')">' + 'Select' + '</a></center>';
+                    }
+                }
+            ]
         });
         myTable.draw(false);
+    }
+
+
+    function setDataTableChart() {
+        myCart = $('#myCart').DataTable({
+            searching: false,
+            "columnDefs": [
+                {
+                    targets: 5,
+                    render: function (data, type, row, meta) {
+                        var param1 = "'" + row[1] + "'";
+                        var param2 = "'" + row[3] + "'";
+                        return '<center><a class="datalink" style="cursor:pointer" onclick="removeToCart(' + param1 + ',' + param2 + ')">' + 'Remove' + '</a></center>';
+                    }
+                },
+                {
+                    targets: 6,
+                    render: function (data, type, row, meta) {
+                        var param1 = "'" + row[1] + "'";
+                        var param2 = "'" + row[3] + "'";
+                        return '<center><a class="datalink" style="cursor:pointer" onclick="deleteToCart(' + param1 + ',' + param2 + ')">' + 'Delete' + '</a></center>';
+                    }
+                }
+            ]
+        });
+        myCart.draw(false);
     }
 
     function SearchData() {
@@ -131,70 +192,110 @@
         });
     }
 
-    function addToCart(productName, price) {
-        // Create a new cart item object
-        var item = {
-            name: productName,
-            price: price
-        };
+    function ShowCart() {
+        myCart.rows().remove();
+        myCart.clear();
+        myCart.draw(false);
 
-        // Add the item to the cart array
-        cart.push(item);
-
-        // Update the total price
-        total += price;
-
-        // Render the cart items
-        renderCart();
-    }
-
-    // Function to remove items from the cart
-    function removeFromCart(index) {
-        // Retrieve the item and its price
-        var item = cart[index];
-        var price = item.price;
-
-        // Remove the item from the cart array
-        cart.splice(index, 1);
-
-        // Update the total price
-        total -= price;
-
-        // Render the cart items
-        renderCart();
-    }
-
-    // Function to render the cart items and update the total price
-    function renderCart() {
-        var cartContainer = document.querySelector('.cart');
-        cartContainer.innerHTML = ''; // Clear previous cart items
-
-        // Loop through the cart items and display them
-        for (var i = 0; i < cart.length; i++) {
-            var cartItem = document.createElement('div');
-            cartItem.className = 'cart-item';
-            cartItem.textContent = cart[i].name + ' - $' + cart[i].price;
-
-            // Create a remove button for each item
-            var removeButton = document.createElement('button');
-            removeButton.textContent = 'Remove';
-            removeButton.onclick = (function (index) {
-                return function () {
-                    removeFromCart(index);
-                }
-            })(i);
-
-            // Append the remove button to the cart item
-            cartItem.appendChild(removeButton);
-
-            // Append the cart item to the cart container
-            cartContainer.appendChild(cartItem);
+        for (var i = 0; i < listCart.length; i++) {
+            myCart.row.add([
+                i + 1,
+                listCart[i].productCode,
+                listCart[i].productDesc,
+                listCart[i].price,
+                listCart[i].quantity,
+                "Remove",
+                "Delete"
+            ])
         }
 
-        // Update the total price display
-        var totalPrice = document.createElement('div');
-        totalPrice.textContent = 'Total Price: $' + total.toFixed(2);
-        cartContainer.appendChild(totalPrice);
+        myCart.draw(false);
+        $("#amount").val(total);
+    }
+
+    function addToCart(productCode, price, stock, productDesc) {
+        var _price = parseFloat(price);
+        let index = listCart.findIndex(obj => obj.productCode === productCode);
+        if (index == -1) {
+            var chatItem = {
+                productCode: productCode,
+                price: _price,
+                quantity: 1,
+                productDesc: productDesc
+            };
+
+            listCart.push(chatItem);
+        }
+        else {
+            if (stock < listCart[index].quantity) {
+                alert('Out of stock');
+                return;
+            }
+            else {
+                listCart[index].quantity = listCart[index].quantity + 1;
+            }
+        }
+
+        console.log("product", listCart);
+
+        total += parseFloat(price);
+        ShowCart();
+
+    }
+
+    function removeToCart(productCode, price) {
+        let index = listCart.findIndex(obj => obj.productCode === productCode);
+        if (index != -1) {
+            listCart[index].quantity = listCart[index].quantity - 1;
+            if (listCart[index].quantity < 1) {
+                listCart.splice(index, 1);
+            }
+        }
+
+        if (listCart[index] == undefined) {
+            total -= parseFloat(price);
+        }
+        else {
+            total -= parseFloat(listCart[index].price);
+        }
+        ShowCart();
+
+        console.log("product", listCart);
+
+    }
+
+    function deleteToCart(productCode, price) {
+        let index = listCart.findIndex(obj => obj.productCode === productCode);
+        if (index != -1) {
+            total -= parseFloat(listCart[index].price) * listCart[index].quantity;
+            listCart.splice(index, 1);
+            ShowCart();
+        }
+
+        console.log("product", listCart);
+
+    }
+
+    function Createtransaction() {
+        var payload = {
+            "deviceInfo": "ShppingCartUI",
+            "transactionId": $('#transactionNumber').val(),
+            "totalAmount": $('#amount').val(),
+            "listProduct": listCart
+        };
+
+        var _url = "Home/CreateTransaction";
+        var _datajson = JSON.stringify(payload);;
+
+        xhr_request_internal(_url, _datajson, function (result) {
+            var response = jQuery.parseJSON(result);
+            if (response.status != 200) {
+                alert(response.message);
+            }
+
+            alert("Thank you for using the service.");
+            location.reload();
+        });
     }
 
 
@@ -223,115 +324,11 @@
     }
 </script>
 
+<style>
+    .datalink {
+        cursor: pointer;
+        color: blue;
+        text-decoration: underline;
+    }
+</style>
 
-@*<!DOCTYPE html>
-<html>
-<head>
-    <title>Shopping Cart</title>
-    <style>
-        /* Add some basic styling to the shopping cart */
-        .cart {
-            width: 300px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
-        }
-
-        /* Style the cart items */
-        .cart-item {
-            margin-bottom: 10px;
-            padding: 5px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-        }
-    </style>
-</head>
-</html>*@
-
-@*<body>
-    <h1>Shopping Cart</h1>
-
-    <div class="cart">
-        <!-- Cart items will be dynamically added here -->
-    </div>
-
-    <h2>Products</h2>
-
-    <!-- Example product buttons -->
-    <button onclick="addToCart('Product 1', 10.99)">Add Product 1 to Cart</button>
-    <button onclick="addToCart('Product 2', 19.99)">Add Product 2 to Cart</button>
-    <button onclick="addToCart('Product 3', 7.99)">Add Product 3 to Cart</button>
-
-    <script>
-        var cart = []; // Array to store cart items
-        var total = 0; // Variable to track total price
-
-        // Function to add items to the cart
-        function addToCart(productName, price) {
-            // Create a new cart item object
-            var item = {
-                name: productName,
-                price: price
-            };
-
-            // Add the item to the cart array
-            cart.push(item);
-
-            // Update the total price
-            total += price;
-
-            // Render the cart items
-            renderCart();
-        }
-
-        // Function to remove items from the cart
-        function removeFromCart(index) {
-            // Retrieve the item and its price
-            var item = cart[index];
-            var price = item.price;
-
-            // Remove the item from the cart array
-            cart.splice(index, 1);
-
-            // Update the total price
-            total -= price;
-
-            // Render the cart items
-            renderCart();
-        }
-
-        // Function to render the cart items and update the total price
-        function renderCart() {
-            var cartContainer = document.querySelector('.cart');
-            cartContainer.innerHTML = ''; // Clear previous cart items
-
-            // Loop through the cart items and display them
-            for (var i = 0; i < cart.length; i++) {
-                var cartItem = document.createElement('div');
-                cartItem.className = 'cart-item';
-                cartItem.textContent = cart[i].name + ' - $' + cart[i].price;
-
-                // Create a remove button for each item
-                var removeButton = document.createElement('button');
-                removeButton.textContent = 'Remove';
-                removeButton.onclick = (function (index) {
-                    return function () {
-                        removeFromCart(index);
-                    }
-                })(i);
-
-                // Append the remove button to the cart item
-                cartItem.appendChild(removeButton);
-
-                // Append the cart item to the cart container
-                cartContainer.appendChild(cartItem);
-            }
-
-            // Update the total price display
-            var totalPrice = document.createElement('div');
-            totalPrice.textContent = 'Total Price: $' + total.toFixed(2);
-            cartContainer.appendChild(totalPrice);
-        }
-    </script>
-</body>
-*@
